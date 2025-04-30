@@ -1,5 +1,6 @@
 import json
 import random
+import timea
 
 def load_questions(file_path=r'C:\Users\nicky\Desktop\adaptive_ai_tutor\questions.json'):
     """
@@ -16,9 +17,9 @@ def load_questions(file_path=r'C:\Users\nicky\Desktop\adaptive_ai_tutor\question
         print("❌ Error: Failed to decode JSON file.")
         return []
 
-def ask_question(questions, current_difficulty):
+def ask_question(questions, current_difficulty, user_performance):
     """
-    Ask a question based on the current difficulty level.
+    Ask a question based on the current difficulty level and provide personalized suggestions.
     """
     if not questions:
         print("⚠️ No questions available.")
@@ -37,15 +38,38 @@ def ask_question(questions, current_difficulty):
     for option in question["options"]:
         print(option)
 
+    # Start timing
+    start_time = time.time()
+
     user_answer = input("\nYour answer (e.g., a, b, c, d): ").strip().lower()
+
+    # End timing
+    end_time = time.time()
+    time_taken = end_time - start_time
+    print(f"⏱️ Time taken: {time_taken:.2f} seconds")
+
     if user_answer == question["answer"]:
         print("✅ Correct!")
         print("💡 Tip: Great job! Keep up the good work.")
+        user_performance["correct"] += 1
         feedback = 1  # Correct answer
     else:
         print(f"❌ Incorrect. The correct answer is: {question['answer']}")
         print(f"💡 Tip: {question.get('tip', 'Review the related topic for better understanding.')}")
+        user_performance["incorrect"] += 1
         feedback = 0  # Incorrect answer
+
+    # Provide personalized suggestions
+    total_attempts = user_performance["correct"] + user_performance["incorrect"]
+    if total_attempts > 0:
+        accuracy = (user_performance["correct"] / total_attempts) * 100
+        print(f"\n📊 Your accuracy so far: {accuracy:.2f}%")
+        if accuracy < 50:
+            print("🔍 Suggestion: Focus on reviewing the basics to improve your understanding.")
+        elif accuracy < 80:
+            print("👍 Suggestion: You're doing well! Keep practicing to reach mastery.")
+        else:
+            print("🌟 Suggestion: Excellent work! Consider trying harder questions for a challenge.")
 
     # Adjust difficulty based on feedback
     difficulty_map = {"easy": "medium", "medium": "hard", "hard": "medium"}
@@ -73,10 +97,11 @@ def main():
 
     # Start with an initial difficulty level
     current_difficulty = "easy"
+    user_performance = {"correct": 0, "incorrect": 0}  # Track user performance
 
     while True:
         # Ask a question and get the next difficulty level
-        current_difficulty = ask_question(questions, current_difficulty)
+        current_difficulty = ask_question(questions, current_difficulty, user_performance)
 
         # Exit option
         choice = input("\n❓ Do you want to answer another question? (y/n): ").strip().lower()
